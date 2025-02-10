@@ -56,14 +56,14 @@
 </head>
 <body>
 <div class="container">
-	<h2>График зависимости T(t)</h2>
+	<h2>График зависимости T(t) + Улучшенный тренд</h2>
 	<canvas id="myChart"></canvas>
 
 	<div class="control">
 		<label for="freon-select">Выберите фреон:</label>
 		<select id="freon-select">
 			<option value="">-- Выберите фреон --</option>
-			<option value="r134">R134</option>
+			<option value="r134">R134А</option>
 			<option value="r290">R290</option>
 		</select>
 	</div>
@@ -99,16 +99,25 @@
 	const myChart = new Chart(ctx, {
 		type: "line",
 		data: {
-			datasets: [{
-				label: "Температура (°C)",
-				data: [],
-				borderWidth: 2,
-				borderColor: "#007bff",
-				backgroundColor: "rgba(0, 123, 255, 0.2)",
-				pointRadius: 5,
-				pointBackgroundColor: "#007bff",
-				tension: 0.4
-			}]
+			datasets: [
+				{
+					label: "Температура (°C)",
+					data: [],
+					borderWidth: 2,
+					borderColor: "#007bff",
+					backgroundColor: "rgba(0, 123, 255, 0.2)",
+					pointRadius: 1.5,
+					pointBackgroundColor: "#007bff",
+					tension: 0.4
+				},
+				{
+					label: "Улучшенный тренд (SiO₂)",
+					data: [],
+					borderWidth: 2,
+					borderColor: "#000000",
+					pointRadius: 0
+				}
+			]
 		},
 		options: {
 			responsive: true,
@@ -126,6 +135,17 @@
 		}
 	});
 
+	function calculateTrendLine(time, temperature) {
+		const x1 = time[1], y1 = temperature[1];
+		const x2 = time[time.length - 1], y2 = temperature[temperature.length - 1];
+
+		const slope = (y2 - y1) / (x2 - x1);
+
+		const trendDataNano = time.slice(1).map(t => ({ x: t, y: y1 + 1.11 * slope * (t - x1) }));
+
+		return trendDataNano;
+	}
+
 	function updateChartAndTable(freon) {
 		if (!freonData[freon]) return;
 
@@ -133,11 +153,14 @@
 
 		const chartData = time.map((t, i) => ({ x: t, y: temperature[i] }));
 
+		const trendDataNano = calculateTrendLine(time, temperature);
+
 		myChart.data.datasets[0].data = chartData;
+		myChart.data.datasets[1].data = trendDataNano;
 		myChart.update();
 
 		const tableBody = document.querySelector("#data-table tbody");
-		tableBody.innerHTML = ""; // Очистка таблицы
+		tableBody.innerHTML = "";
 		for (let i = 0; i < time.length; i++) {
 			const row = `<tr><td>${time[i]}</td><td>${temperature[i].toFixed(2)}</td></tr>`;
 			tableBody.innerHTML += row;
