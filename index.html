@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>График температуры</title>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			margin: 0;
+			padding: 20px;
+		}
+		.container {
+			max-width: 700px;
+			margin: 0 auto;
+			background: white;
+			border-radius: 8px;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			padding: 20px;
+			text-align: center;
+		}
+		.control {
+			margin: 20px 0;
+		}
+		label {
+			font-weight: bold;
+			margin-right: 10px;
+		}
+		select {
+			padding: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			font-size: 16px;
+		}
+		select:focus {
+			border-color: #007bff;
+			outline: none;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 20px;
+		}
+		th, td {
+			border: 2px solid black;
+			padding: 8px;
+			text-align: center;
+		}
+		th {
+			background-color: #007bff;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+<div class="container">
+	<h2>График зависимости T(t)</h2>
+	<canvas id="myChart"></canvas>
+
+	<div class="control">
+		<label for="freon-select">Выберите фреон:</label>
+		<select id="freon-select">
+			<option value="">-- Выберите фреон --</option>
+			<option value="r134">R134</option>
+			<option value="r290">R290</option>
+		</select>
+	</div>
+
+	<table id="data-table">
+		<thead>
+			<tr>
+				<th>Время (мин)</th>
+				<th>Температура (°C)</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+</div>
+
+<script>
+	const r134Data = {
+		time: [0, 12, 33, 60, 88, 90],
+		temperature: [14.7, 12.0, 11.3, 9.7, 9.2, 9.0]
+	};
+
+	const r290Data = {
+		time: [0, 11, 38, 58, 84, 90],
+		temperature: [17.7, 12.2, 9.6, 8.7, 7.9, 7.7]
+	};
+
+	const freonData = {
+		r134: r134Data,
+		r290: r290Data
+	};
+
+	const ctx = document.getElementById("myChart").getContext("2d");
+	const myChart = new Chart(ctx, {
+		type: "line",
+		data: {
+			datasets: [{
+				label: "Температура (°C)",
+				data: [],
+				borderWidth: 2,
+				borderColor: "#007bff",
+				backgroundColor: "rgba(0, 123, 255, 0.2)",
+				pointRadius: 5,
+				pointBackgroundColor: "#007bff",
+				tension: 0.4
+			}]
+		},
+		options: {
+			responsive: true,
+			scales: {
+				x: {
+					title: { display: true, text: "Время (мин)" },
+					type: "linear",
+					ticks: { stepSize: 10 }
+				},
+				y: {
+					title: { display: true, text: "Температура (°C)" },
+					beginAtZero: true
+				}
+			}
+		}
+	});
+
+	function updateChartAndTable(freon) {
+		if (!freonData[freon]) return;
+
+		const { time, temperature } = freonData[freon];
+
+		const chartData = time.map((t, i) => ({ x: t, y: temperature[i] }));
+
+		myChart.data.datasets[0].data = chartData;
+		myChart.update();
+
+		const tableBody = document.querySelector("#data-table tbody");
+		tableBody.innerHTML = ""; // Очистка таблицы
+		for (let i = 0; i < time.length; i++) {
+			const row = `<tr><td>${time[i]}</td><td>${temperature[i].toFixed(2)}</td></tr>`;
+			tableBody.innerHTML += row;
+		}
+	}
+
+	document.getElementById("freon-select").addEventListener("change", function () {
+		updateChartAndTable(this.value);
+	});
+</script>
+</body>
+</html>
